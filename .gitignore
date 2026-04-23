@@ -1,4 +1,7 @@
 *.tar
 *.zip
 build.log
+.DS_Store
 *.swp
+.vscode/
+.idea/
