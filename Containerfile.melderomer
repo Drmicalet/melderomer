@@ -1,0 +1,73 @@
+# ============================================================
+# melderomer v5.0 — Arch Linux Honeytrap Honeypot
+# Reemplaza Cowrie (Python/Twisted) por Honeytrap (Go puro)
+# - Sin Python, sin venv, sin dropin.cache, sin dolores de cabeza
+# - Binario Go estático compilado directamente sobre Arch Linux
+# ============================================================
+FROM ghcr.io/drmicalet/arch-base-privileged:latest
+LABEL version="5.0"
+LABEL description="melderomer — Arch Linux Honeytrap Honeypot (Go)"
+
+ENV HONEYTRAP_HOME=/opt/melderomer
+ENV PATH=${HONEYTRAP_HOME}/bin:${PATH}
+
+# ----------------------------------------------------------
+# Paso 1: Dependencias de compilación (Arch Linux)
+# ----------------------------------------------------------
+RUN pacman -Syu --noconfirm && \
+    pacman -S --noconfirm --needed \
+        git \
+        go \
+        gcc \
+        make \
+        ca-certificates \
+        base-devel && \
+    pacman -Scc --noconfirm
+
+# ----------------------------------------------------------
+# Paso 2: Clonar y compilar Honeytrap
+# CGO_ENABLED=0 → binario 100% estático, sin dependencias
+# ----------------------------------------------------------
+RUN git clone --depth 1 https://github.com/honeytrap/honeytrap.git /tmp/honeytrap-src && \
+    cd /tmp/honeytrap-src && \
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
+        -ldflags="-s -w -X main.version=5.0-melderomer" \
+        -o /tmp/honeytrap-bin . && \
+    strip /tmp/honeytrap-bin && \
+    mkdir -p ${HONEYTRAP_HOME}/bin && cp /tmp/honeytrap-bin ${HONEYTRAP_HOME}/bin/honeytrap && \
+    chmod +x ${HONEYTRAP_HOME}/bin/honeytrap && \
+    rm -rf /tmp/honeytrap-src /tmp/honeytrap-bin
+
+# ----------------------------------------------------------
+# Paso 3: Estructura de directorios
+# ----------------------------------------------------------
+RUN mkdir -p ${HONEYTRAP_HOME}/{config,data,log}
+
+# ----------------------------------------------------------
+# Paso 4: Configuración por defecto (se sobreescribe con VOLUME/COPY)
+# ----------------------------------------------------------
+COPY config.toml ${HONEYTRAP_HOME}/config/config.toml
+COPY entrypoint-melderomer.sh ${HONEYTRAP_HOME}/entrypoint.sh
+RUN chmod +x ${HONEYTRAP_HOME}/entrypoint.sh
+
+# ----------------------------------------------------------
+# Paso 5: Limpiar compilación (no necesitamos Go en runtime)
+# ----------------------------------------------------------
+RUN pacman -Rns --noconfirm go gcc make base-devel && \
+    pacman -Scc --noconfirm
+
+# ----------------------------------------------------------
+# Puertos expuestos
+# 2222 → SSH Simulator
+# 2223 → Telnet
+# 8888 → HTTP
+# ----------------------------------------------------------
+EXPOSE 2222 2223 8888
+
+# Datos persistentes
+VOLUME ["${HONEYTRAP_HOME}/data", "${HONEYTRAP_HOME}/log"]
+
+WORKDIR ${HONEYTRAP_HOME}
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["--config", "/opt/melderomer/config/config.toml", "--data", "/opt/melderomer/data"]

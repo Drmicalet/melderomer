@@ -1,0 +1,92 @@
+# ============================================================
+# config.toml - melderomer v5.0
+# Honeytrap: SSH + Telnet + HTTP
+# ============================================================
+
+[listener]
+type = "socket"
+
+# --- SSH Simulator ---
+[service.ssh]
+type = "ssh-simulator"
+credentials = [
+    "root:root",
+    "root:password",
+    "root:123456",
+    "root:admin",
+    "root:toor",
+    "admin:admin",
+    "admin:password",
+    "admin:123456",
+    "ubuntu:ubuntu",
+    "ubuntu:password",
+    "test:test",
+    "guest:guest",
+    "user:user",
+    "user:password",
+    "pi:raspberry",
+    "ftp:ftp",
+    "support:support",
+    "operator:operator",
+    "mysql:mysql",
+    "postgres:postgres",
+    "oracle:oracle",
+    "nagios:nagios",
+    "git:git",
+    "jenkins:jenkins",
+    "deploy:deploy",
+    "www:www",
+    "web:web",
+    "apache:apache",
+    "nginx:nginx",
+    "docker:docker",
+    "kubernetes:kubernetes",
+    "redis:redis",
+    "mongo:mongo",
+    "elastic:elastic",
+    "kibana:kibana",
+    "grafana:grafana",
+    "prometheus:prometheus",
+    "consul:consul",
+    "vault:vault",
+    "ansible:ansible",
+    "terraform:terraform"
+]
+
+[[port]]
+ports = ["tcp/2222"]
+services = ["ssh"]
+
+# --- Telnet ---
+[service.telnet]
+type = "telnet"
+server-name = "Ubuntu-SSH-4.15.0-142-generic"
+
+[[port]]
+ports = ["tcp/2223"]
+services = ["telnet"]
+
+# --- HTTP ---
+[service.http]
+type = "http"
+
+[[port]]
+ports = ["tcp/8888"]
+services = ["http"]
+
+# --- Output channels ---
+[channel.console]
+type = "console"
+
+[channel.file]
+type = "file"
+filename = "/opt/melderomer/log/melderomer.json"
+
+# --- Filters: everything goes to console + file ---
+[[filter]]
+channel = ["console", "file"]
+
+# --- Logging ---
+[[logging]]
+output = "stdout"
+level = "info"
