@@ -10,6 +10,37 @@
 
 A custom, from-scratch container image — not a repackaged upstream Docker image — with full control over the build chain from the base OS to the running binary.
 
+## Quick Start
+
+### Option A: Pull the pre-built image
+
+The image is available on GitHub Container Registry:
+
+**Podman:**
+```bash
+podman pull ghcr.io/drmicalet/melderomer:5.0
+podman run -d --name melderomer -p 2222:2222 -p 2223:2223 -p 8888:8888 ghcr.io/drmicalet/melderomer:5.0
+```
+
+**K3s (import from tar):**
+```bash
+podman pull ghcr.io/drmicalet/melderomer:5.0
+podman save ghcr.io/drmicalet/melderomer:5.0 -o melderomer-5.0.tar
+sudo k3s ctr images import melderomer-5.0.tar
+kubectl apply -f melderomer-k8s.yaml
+```
+
+### Option B: Build from source
+
+```bash
+git clone https://github.com/Drmicalet/melderomer.git
+cd melderomer
+chmod +x 08-melderomer-deploy.sh
+./08-melderomer-deploy.sh
+```
+
+Handles: `podman build` then `podman save` then `k3s ctr images import` then `kubectl apply`
+
 ## Architecture
 
 ```
@@ -54,26 +85,6 @@ A custom, from-scratch container image — not a repackaged upstream Docker imag
 ```
 services > ssh > ssh.username=root, ssh.password=admin, type=password-authentication
 ```
-
-## Build
-
-Base image: `ghcr.io/drmicalet/arch-base-privileged:latest`
-
-1. Install Go, GCC, git via pacman
-2. Clone Honeytrap, compile static binary (CGO_ENABLED=0)
-3. Strip, remove build toolchain
-4. Minimal Arch container with a single Go binary
-
-## Deploy
-
-```bash
-git clone https://github.com/Drmicalet/melderomer.git
-cd melderomer
-chmod +x 08-melderomer-deploy.sh
-./08-melderomer-deploy.sh
-```
-
-Handles: `podman build` then `podman save` then `k3s ctr images import` then `kubectl apply`
 
 ## Configuration
 
